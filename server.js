@@ -26,6 +26,8 @@ function Server(opts){
   this.URI       = "http://localhost:" + this.port
   this.sock      = {emit: function(){}}
 
+  app.locals.URI = this.URI
+
   this.listen    = function(next){
     var self = this
     server.listen(this.port, next)
@@ -82,8 +84,17 @@ Server.prototype.start = function(filePath, next){
     }
   })
 
+  app.engine('html', function (filePath, options, callback) { // define the template engine
+    fs.readFile(filePath, function (err, content) {
+      if (err) throw new Error(err);
+      // this is an extremely simple template engine
+      var rendered = content.toString().replace('#url#', options.url)
+      return callback(null, rendered);
+    })
+  })
+
   app.get('/', function (req, res) {
-    res.sendFile(__dirname + '/index.html')
+    res.render('index', {'url': app.locals.URI})
   })
 
   app.delete('/', function(req, res){
